@@ -27,6 +27,9 @@ jobs:
       
       - name: 의존성 설치
         run: npm ci
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: 'false'
+          PUPPETEER_CACHE_DIR: ~/.cache/puppeteer
       
       - name: TypeScript 빌드
         run: npm run build
