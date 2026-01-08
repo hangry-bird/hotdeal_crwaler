@@ -31,6 +31,9 @@ jobs:
           PUPPETEER_SKIP_DOWNLOAD: 'false'
           PUPPETEER_CACHE_DIR: ~/.cache/puppeteer
       
+      - name: Puppeteer Chrome 설치
+        run: npx puppeteer browsers install chrome
+      
       - name: TypeScript 빌드
         run: npm run build
       
