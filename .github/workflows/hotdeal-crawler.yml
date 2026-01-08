@@ -1,0 +1,47 @@
+name: 핫딜 크롤러
+
+on:
+  # 주기적으로 실행 (cron 형식)
+  schedule:
+    # 매 30분마다 실행 (UTC 시간 기준)
+    - cron: '*/30 * * * *'
+  
+  # 수동 실행 가능
+  workflow_dispatch:
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # state.json 커밋을 위한 쓰기 권한
+    
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v3
+      
+      - name: Node.js 설정
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+          cache: 'npm'
+      
+      - name: 의존성 설치
+        run: npm ci
+      
+      - name: TypeScript 빌드
+        run: npm run build
+      
+      - name: 크롤러 실행
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: npm start
+      
+      - name: 상태 파일 커밋 (변경사항이 있는 경우)
+        if: github.event_name == 'schedule'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add state.json || true
+          git diff --staged --quiet || git commit -m "Update state.json [skip ci]"
+          git push || true
+
