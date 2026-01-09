@@ -14,6 +14,7 @@ export async function sendSlackNotification(post: Post): Promise<void> {
   }
 
   const message: any = {
+    text: `🔥 ${post.title}`, // 미리보기로 표시될 제목
     attachments: [
       {
         color: SLACK_CONFIG.COLOR,
@@ -59,9 +60,9 @@ export async function sendSlackNotification(post: Post): Promise<void> {
     ],
   };
 
-  // 썸네일 이미지가 있으면 추가
+  // 썸네일 이미지가 있으면 작은 썸네일로 추가 (미리보기 대신 필드 옆에 작게 표시)
   if (post.thumbnail) {
-    message.attachments[0].image_url = post.thumbnail;
+    message.attachments[0].thumb_url = post.thumbnail;
   }
 
   try {
