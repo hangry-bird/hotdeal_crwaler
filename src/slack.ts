@@ -3,6 +3,24 @@ import { SLACK_WEBHOOK_URL, SLACK_CONFIG } from "./config";
 import { Post } from "./crawler";
 
 /**
+ * 카테고리에 따른 이모지 반환
+ */
+function getCategoryEmoji(category: string): string {
+  const categoryMap: Record<string, string> = {
+    PC제품: "💻",
+    가전제품: "⚡",
+    기타: "📦",
+    먹거리: "🍔",
+    "SW/게임": "🎮",
+    생활용품: "🛒",
+    의류: "👕",
+    화장품: "💄",
+  };
+
+  return categoryMap[category] || "🔥";
+}
+
+/**
  * 슬랙으로 메시지 전송
  */
 export async function sendSlackNotification(post: Post): Promise<void> {
@@ -13,8 +31,11 @@ export async function sendSlackNotification(post: Post): Promise<void> {
     return;
   }
 
+  const category = post.category || "기타";
+  const emoji = getCategoryEmoji(category);
+
   const message: any = {
-    text: `🔥 ${post.title}`, // 미리보기로 표시될 제목
+    text: `${emoji} ${post.title}`,
     attachments: [
       {
         color: SLACK_CONFIG.COLOR,
@@ -22,47 +43,34 @@ export async function sendSlackNotification(post: Post): Promise<void> {
         title_link: post.url,
         fields: [
           {
-            title: "쇼핑몰",
-            value: post.shop || "알 수 없음",
+            title: "Market",
+            value: post.shop || "Unknown",
             short: true,
           },
           {
-            title: "가격",
-            value: post.price || "알 수 없음",
+            title: "Price",
+            value: post.price || "Unknown",
             short: true,
           },
           {
-            title: "배송",
-            value: post.delivery || "알 수 없음",
+            title: "Category",
+            value: post.category || "Unknown",
             short: true,
           },
           {
-            title: "카테고리",
-            value: post.category || "알 수 없음",
-            short: true,
-          },
-          {
-            title: "시간",
-            value: post.date || "알 수 없음",
-            short: true,
+            title: "Link",
+            value: post.url,
+            short: false,
           },
         ],
-        actions: [
-          {
-            type: "button",
-            text: "게시글 보기",
-            url: post.url,
-          },
-        ],
-        footer: "핫딜 알림",
         ts: Math.floor(Date.now() / 1000),
       },
     ],
   };
 
-  // 썸네일 이미지가 있으면 작은 썸네일로 추가 (미리보기 대신 필드 옆에 작게 표시)
+  // 썸네일 이미지가 있으면 추가
   if (post.thumbnail) {
-    message.attachments[0].thumb_url = post.thumbnail;
+    message.attachments[0].image_url = post.thumbnail;
   }
 
   try {
@@ -89,7 +97,7 @@ export async function sendSlackNotifications(posts: Post[]): Promise<void> {
     try {
       await sendSlackNotification(post);
       // 슬랙 API 레이트 리밋 방지를 위한 짧은 딜레이
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
       console.error(`게시글 ${post.number} 알림 전송 실패:`, error);
     }
