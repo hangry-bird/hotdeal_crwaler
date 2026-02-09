@@ -77,7 +77,9 @@ async function crawlWithPuppeteer(): Promise<Post[]> {
     const $ = cheerio.load(html);
     const posts: Post[] = [];
 
-    $(".fm_best_widget li.li").each((_, element) => {
+    // 예전에는 .fm_best_widget 안에 리스트가 있었는데,
+    // 현재는 컨테이너 클래스가 바뀐 상태라 li.li만 기준으로 잡는다.
+    $("li.li").each((_, element) => {
       try {
         const $element = $(element);
 
@@ -106,6 +108,16 @@ async function crawlWithPuppeteer(): Promise<Post[]> {
 
         if (url && !url.startsWith("http")) {
           url = `https://www.fmkorea.com${url}`;
+        }
+
+        // 추천수 추출 (.count) - 비추천(-1 이하)은 제외
+        const recommendText = $element.find(".count").first().text().trim();
+        const recommendMatch = recommendText.match(/-?\d+/);
+        const recommend = recommendMatch
+          ? parseInt(recommendMatch[0], 10)
+          : 0;
+        if (recommend <= -1) {
+          return;
         }
 
         // 작성자 추출 (.author에서 " / " 제거)
@@ -271,7 +283,9 @@ export async function crawlHotdealBoard(): Promise<Post[]> {
     const $ = cheerio.load(response.data);
     const posts: Post[] = [];
 
-    $(".fm_best_widget li.li").each((_, element) => {
+    // 예전에는 .fm_best_widget 안에 리스트가 있었는데,
+    // 현재는 컨테이너 클래스가 바뀐 상태라 li.li만 기준으로 잡는다.
+    $("li.li").each((_, element) => {
       try {
         const $element = $(element);
 
@@ -300,6 +314,16 @@ export async function crawlHotdealBoard(): Promise<Post[]> {
 
         if (url && !url.startsWith("http")) {
           url = `https://www.fmkorea.com${url}`;
+        }
+
+        // 추천수 추출 (.count) - 비추천(-1 이하)은 제외
+        const recommendText = $element.find(".count").first().text().trim();
+        const recommendMatch = recommendText.match(/-?\d+/);
+        const recommend = recommendMatch
+          ? parseInt(recommendMatch[0], 10)
+          : 0;
+        if (recommend <= -1) {
+          return;
         }
 
         // 작성자 추출 (.author에서 " / " 제거)
