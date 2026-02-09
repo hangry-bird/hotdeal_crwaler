@@ -28,7 +28,20 @@ async function runWorkflow(): Promise<void> {
     const latestPostNumber = latestPost.number;
     console.log(`최신 게시글 번호: ${latestPostNumber}`);
 
-    // 4. 새 글 확인
+    // 4. lastPostNumber가 비정상적으로 클 때 자동 복구
+    if (lastPostNumber > latestPostNumber) {
+      console.warn(
+        `상태 파일의 lastPostNumber(${lastPostNumber})가 최신 글 번호(${latestPostNumber})보다 커서 최신 글 번호로 상태를 초기화합니다.`
+      );
+      // 이번 실행에서는 알림을 보내지 않고 상태만 정상값으로 맞춘다.
+      saveState(latestPostNumber);
+      console.log(
+        "상태를 최신 게시글 번호로 초기화했으므로 이번 실행에서는 알림을 건너뜁니다."
+      );
+      return;
+    }
+
+    // 5. 새 글 확인
     if (latestPostNumber > lastPostNumber) {
       // 새 글 필터링 (마지막 확인 번호보다 큰 게시글들)
       const newPosts = posts.filter((post) => post.number > lastPostNumber);
@@ -36,12 +49,12 @@ async function runWorkflow(): Promise<void> {
       newPosts.sort((a, b) => a.number - b.number);
       console.log(`새 글 ${newPosts.length}개 발견!`);
 
-      // 5. 슬랙 알림 전송
+      // 6. 슬랙 알림 전송
       if (newPosts.length > 0) {
         await sendSlackNotifications(newPosts);
       }
 
-      // 6. 상태 저장 (최신 게시글 번호로 업데이트)
+      // 7. 상태 저장 (최신 게시글 번호로 업데이트)
       saveState(latestPostNumber);
     } else {
       console.log("새 글이 없습니다.");
